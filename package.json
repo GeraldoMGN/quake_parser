@@ -1,0 +1,19 @@
+{
+  "name": "quake_parser",
+  "version": "1.0.0",
+  "description": "Quake 3 arena parser and game information API",
+  "main": "src/index.js",
+  "repository": "https://github.com/GeraldoMGN/quake_parser",
+  "author": "Geraldo Galvao <gmgn@cin.ufpe.br>",
+  "license": "MIT",
+  "type": "module",
+  "devDependencies": {
+    "eslint": "^7.20.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-plugin-import": "^2.22.1"
+  },
+  "scripts": {
+    "lint": "eslint src/*.js",
+    "start": "node src/index.js"
+  }
+}
