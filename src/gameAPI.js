@@ -1,9 +1,10 @@
+import express from 'express';
 import GameLogParser from './gameLogParser.js';
 import { readJSON, saveJSON } from './utils.js';
 
 class GameAPI {
-  constructor() {
-    this.games = null;
+  constructor(games) {
+    this.games = games;
   }
 
   readLog(filename) {
@@ -15,6 +16,10 @@ class GameAPI {
 
   // This is the solution to task 2
   printRanking() {
+    if (!this.games) {
+      throw Error('You need to read a game log before printing the player ranking');
+    }
+
     this.games.forEach((game) => {
       console.log(`${Object.keys(game)[0]}, ranked by kills:`);
 
@@ -28,6 +33,25 @@ class GameAPI {
       rankedPlayers.forEach((entry) => (
         console.log(`  ${entry[0]}: ${entry[1]} kills`)));
       console.log('');
+    });
+  }
+
+  // This is the solution to task 3
+  startServer(port) {
+    if (!this.games) {
+      throw Error('You need to read a game log before starting game API server');
+    }
+
+    const app = express();
+
+    // Get game information by id
+    app.get('/gameByID/:gameID', (req, res) => {
+      res.send(this.games[req.params.gameID]);
+    });
+
+    // Starts server
+    app.listen(port, () => {
+      console.log(`Game API server listening at http://localhost:${port}`);
     });
   }
 }
