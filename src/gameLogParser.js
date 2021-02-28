@@ -1,8 +1,9 @@
 const WORLD_ID = '1022';
 
-/*   The parser works breaking the input into tokens (strings with no spaces), then starts
+/* This is the solution to task 1
+ * The parser works breaking the input into tokens (strings with no spaces), then starts
  *  iterating through the tokens and consuming then, reading it's value to handle what should
- *  be added to the gameInfo object;
+ *  be added to the gameInfo object
  */
 class GameLogParser {
   constructor(log) {
@@ -97,7 +98,7 @@ class GameLogParser {
     return consumedTokens;
   }
 
-  // Consumes tokens until token contains end
+  // Consumes tokens until token contains string 'end'
   _consumeTokensUntilIncludes(end) {
     const consumedTokens = [];
     while (!this._currentToken().includes(end)) {
