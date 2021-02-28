@@ -11,7 +11,7 @@ class GameLogParser {
     this.logTokenized = [];
     this.tokenIndex = 0;
 
-    this.gameInfo = [];
+    this.gameInfos = [];
 
     this.parse();
   }
@@ -21,7 +21,7 @@ class GameLogParser {
   }
 
   currentGameInfo() {
-    return Object.values(this.gameInfo[this.gameInfo.length - 1])[0];
+    return Object.values(this.gameInfos[this.gameInfos.length - 1])[0];
   }
 
   parse() {
@@ -39,6 +39,14 @@ class GameLogParser {
   // Handles and consumes current token
   consumeToken() {
     switch (this.currentToken()) {
+      case 'InitGame:': {
+        this.consumeInitGameToken();
+        break;
+      }
+      case 'ClientUserinfoChanged:': {
+        this.consumeUserInfoToken();
+        break;
+      }
       case 'Kill:': {
         this.consumeKillToken();
         break;
@@ -56,6 +64,18 @@ class GameLogParser {
         this.tokenIndex += 1;
       }
     }
+    return consumedTokens;
+  }
+
+  // Consumes tokens until token contains end
+  consumeTokensUntilIncludes(end) {
+    const consumedTokens = [];
+    while (!this.currentToken().includes(end)) {
+      consumedTokens.push(this.currentToken());
+      this.tokenIndex += 1;
+    }
+    consumedTokens.push(this.currentToken());
+
     return consumedTokens;
   }
 
@@ -77,6 +97,33 @@ class GameLogParser {
       // If killed by a player, adds 1 kill to killer
       this.currentGameInfo().kills[killerPlayerID] += 1;
     }
+  }
+
+  // Consumes "InitGame:"
+  consumeInitGameToken() {
+    this.tokenIndex += 1;
+
+    // Adds empty gameInfo entry
+    this.gameInfos.push({
+      [`game_${this.gameInfos.length}`]: {
+        total_kills: 0,
+        players: {},
+        kills: {},
+      },
+    });
+  }
+
+  // Consumes "ClientUserinfoChanged:"
+  consumeUserInfoToken() {
+    this.tokenIndex += 1;
+    const playerID = this.currentToken();
+
+    this.tokenIndex += 1;
+    const playerInfo = this.consumeTokensUntilIncludes('\\t').join(' ');
+    const playerUsername = playerInfo.match(/n\\([^\\]*)\\t/)[1];
+
+    this.currentGameInfo().players[playerID] = playerUsername;
+    this.currentGameInfo().kills[playerID] = this.currentGameInfo().kills[playerID] || 0;
   }
 }
 
