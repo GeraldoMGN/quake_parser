@@ -1,3 +1,5 @@
+import fs from 'fs';
+
 const WORLD_ID = '1022';
 
 /*   The parser works breaking the input into tokens (strings with no spaces), then starts
@@ -11,9 +13,12 @@ class GameLogParser {
     this.logTokenized = [];
     this.tokenIndex = 0;
 
-    this.gameInfos = [];
+    // Contains the raw information of every game
+    this.games = [];
 
     this.parse();
+    const handledGames = this.userIdsToUsernames();
+    GameLogParser.saveJSON(handledGames);
   }
 
   currentToken() {
@@ -21,7 +26,7 @@ class GameLogParser {
   }
 
   currentGameInfo() {
-    return Object.values(this.gameInfos[this.gameInfos.length - 1])[0];
+    return this.games[this.games.length - 1];
   }
 
   parse() {
@@ -30,6 +35,27 @@ class GameLogParser {
     while (this.tokenIndex < this.logTokenized.length) {
       this.consumeToken();
     }
+  }
+
+  // Transforms users IDs to usernames in the game information array
+  userIdsToUsernames() {
+    return this.games.map((game, gameIndex) => ({
+      [`game_${gameIndex}`]: {
+        ...game,
+        players: Object.values(game.players),
+        kills: Object.entries(game.kills).reduce((kills, [userID, userKills]) => (
+          { ...kills, [game.players[userID]]: userKills }
+        ), {}),
+      },
+    }
+    ));
+  }
+
+  static saveJSON(handledGames) {
+    fs.writeFile('games.json', JSON.stringify(handledGames, null, 2), (err) => {
+      if (err) throw err;
+      console.log('Game information saved.');
+    });
   }
 
   static tokenize(inputString) {
@@ -103,13 +129,11 @@ class GameLogParser {
   consumeInitGameToken() {
     this.tokenIndex += 1;
 
-    // Adds empty gameInfo entry
-    this.gameInfos.push({
-      [`game_${this.gameInfos.length}`]: {
-        total_kills: 0,
-        players: {},
-        kills: {},
-      },
+    // Adds empty game information entry
+    this.games.push({
+      total_kills: 0,
+      players: {},
+      kills: {},
     });
   }
 
@@ -120,9 +144,11 @@ class GameLogParser {
 
     this.tokenIndex += 1;
     const playerInfo = this.consumeTokensUntilIncludes('\\t').join(' ');
+    // Uses regex to get username
     const playerUsername = playerInfo.match(/n\\([^\\]*)\\t/)[1];
 
     this.currentGameInfo().players[playerID] = playerUsername;
+    // Defaults player kill to 0 if don't already exists
     this.currentGameInfo().kills[playerID] = this.currentGameInfo().kills[playerID] || 0;
   }
 }
