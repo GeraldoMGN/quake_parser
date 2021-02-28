@@ -1,52 +1,106 @@
 # Quake Parser
 
-## Task 1
+## Solução
 
-Construa um parser para o arquivo de log games.log.
+Como ferramentas utilizei o NodeJS com JavaScript vanilla e a biblioteca Express para fazer a API em si.
 
-O arquivo `games.log` é gerado pelo servidor de quake 3 arena. Ele registra todas as informações dos jogos, quando um jogo começa, quando termina, quem matou quem, quem morreu pq caiu no vazio, quem morreu machucado, entre outros.
+O maior desafio foi usar OOP com JavaScript, uma linguagem baseada em dicionários, faltam features básicas como métodos e atributos privados, a convenção usada na comunidade é usar o padrão `_variableName` para estes campos.
 
-O parser deve ser capaz de ler o arquivo, agrupar os dados de cada jogo, e em cada jogo deve coletar as informações de morte.
+### Task 1
 
-### Exemplo
+Essa task é resolvida com a implementação da classe GameLogParser. Esta classe lê o log, o separa em tokens, e itera pelos mesmo até achar os tokens "Killed:", "ClientUserinfoChanged:" e "InitGame:", e com isso monta o objeto "games", com informações de jogadores e kills.
 
-  	21:42 Kill: 1022 2 22: <world> killed Isgalamido by MOD_TRIGGER_HURT
-  
-  O player "Isgalamido" morreu pois estava ferido e caiu de uma altura que o matou.
+Os resultados também são salvos no arquivo "games.json".
 
-  	2:22 Kill: 3 2 10: Isgalamido killed Dono da Bola by MOD_RAILGUN
-  
-  O player "Isgalamido" matou o player Dono da Bola usando a arma Railgun.
-  
-Para cada jogo o parser deve gerar algo como:
+### Task 2
 
-    game_1: {
-	    total_kills: 45;
-	    players: ["Dono da bola", "Isgalamido", "Zeh"]
-	    kills: {
-	      "Dono da bola": 5,
-	      "Isgalamido": 18,
-	      "Zeh": 20
-	    }
-	  }
+Essa task é resolvida com a implementação do método `GameAPI.printRanking()` a partir do objeto retornado por `GameLogParser.parse()`, que ranqueia os players pelo seu número de kills.
 
-### Observações
+### Task 3
 
-1. Quando o `<world>` mata o player ele perde -1 kill.
-2. `<world>` não é um player e não deve aparecer na lista de players e nem no dicionário de kills.
-3. `total_kills` são os kills dos games, isso inclui mortes do `<world>`.
+Essa task é resolvida com a implementação do método `GameAPI.startServer()`, uma simples função que usa a biblioteca Express para criar servidor.
 
-## Task 2
+## Usando o projeto
 
-Após construir o parser construa um script que imprima um relatório de cada jogo (simplemente imprimindo o hash) e um ranking geral de kills por jogador.
+- É necessário o NodeJS para rodar esse projeto, usei a versão 15.10, porém qualquer versão mais nova deve funcionar.
+- Instale as dependências utilizando o comando: de terminal:
 
-## Task 3
+```
+npm install
+```
 
-Construir uma API com qualquer Linguagem que busque o resultado do Game por ID.
+- Inicie o script utilizando o comando:
 
-# Requisitos
+```
+npm run-script start
+```
 
-1. O exercício poderá ser feito em qualquer linguagem, mas você deverá utilizar os conceitos de POO.
-2. Use git e tente fazer commits pequenos e bem descritos.
-3. Faça pelo menos um README explicando como fazer o setup, uma explicação da solução proposta
-4. Siga o que considera boas práticas de programação, coisas que um bom desenvolvedor olhe no seu código e não ache "feio" ou "ruim".
+Com isso o programa irá ler o log, printar os ranks por jogo e iniciar o servidor.
+
+## Requests
+
+### Game by ID
+
+Devolve a informação de um jogo a partir do seu ID.
+
+- ### URL
+  `/gameByID/:gameID`
+- ### Parametros
+
+  `gameID=[integer]`
+
+- ### Respostas
+
+  - **Código**: `200`
+  - **Conteúdo**:
+
+```
+  {
+  "game_1": {
+    "total_kills": 11,
+    "players": [
+      "Isgalamido",
+      "Mocinha"
+    ],
+    "kills": {
+      "Isgalamido": -5,
+      "Mocinha": 0
+    }
+  }
+}
+```
+
+- **Código**: `404 NOT FOUND`
+- **Conteúdo**: `ID provided does not represent a game.`
+
+## Exemplo
+
+### Request
+
+- **URL:** `http://localhost:3000/gameByID/5`
+
+### Response
+
+```
+{
+  "game_5": {
+    "total_kills": 29,
+    "players": [
+      "Oootsimo",
+      "Isgalamido",
+      "Zeh",
+      "Dono da Bola",
+      "Mal",
+      "Assasinu Credi"
+    ],
+    "kills": {
+      "Oootsimo": 8,
+      "Isgalamido": 3,
+      "Zeh": 7,
+      "Dono da Bola": 2,
+      "Mal": 0,
+      "Assasinu Credi": 1
+    }
+  }
+}
+```
