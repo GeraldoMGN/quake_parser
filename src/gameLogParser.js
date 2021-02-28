@@ -1,5 +1,3 @@
-import fs from 'fs';
-
 const WORLD_ID = '1022';
 
 /*   The parser works breaking the input into tokens (strings with no spaces), then starts
@@ -8,38 +6,51 @@ const WORLD_ID = '1022';
  */
 class GameLogParser {
   constructor(log) {
-    this.log = log;
+    this._log = log;
 
-    this.logTokenized = [];
-    this.tokenIndex = 0;
+    this._logTokenized = [];
+    this._tokenIndex = 0;
 
     // Contains the raw information of every game
-    this.games = [];
-
-    this.parse();
-    const handledGames = this.userIdsToUsernames();
-    GameLogParser.saveJSON(handledGames);
+    this._games = [];
   }
 
-  currentToken() {
-    return this.logTokenized[this.tokenIndex];
+  /**
+   * @param {string} rawLog
+   */
+  set log(rawLog) {
+    this._log = rawLog;
+
+    // Resets parsing attributes
+    this._tokenIndex = 0;
+    this._games = [];
   }
 
-  currentGameInfo() {
-    return this.games[this.games.length - 1];
+  get rawGameInfo() {
+    return this._games;
+  }
+
+  _currentToken() {
+    return this._logTokenized[this._tokenIndex];
+  }
+
+  _currentGameInfo() {
+    return this._games[this._games.length - 1];
   }
 
   parse() {
-    this.logTokenized = GameLogParser.tokenize(this.log);
+    this._logTokenized = GameLogParser._tokenize(this._log);
 
-    while (this.tokenIndex < this.logTokenized.length) {
-      this.consumeToken();
+    while (this._tokenIndex < this._logTokenized.length) {
+      this._consumeToken();
     }
+
+    return this._userIdsToUsernames();
   }
 
   // Transforms users IDs to usernames in the game information array
-  userIdsToUsernames() {
-    return this.games.map((game, gameIndex) => ({
+  _userIdsToUsernames() {
+    return this._games.map((game, gameIndex) => ({
       [`game_${gameIndex}`]: {
         ...game,
         players: Object.values(game.players),
@@ -51,86 +62,79 @@ class GameLogParser {
     ));
   }
 
-  static saveJSON(handledGames) {
-    fs.writeFile('games.json', JSON.stringify(handledGames, null, 2), (err) => {
-      if (err) throw err;
-      console.log('Game information saved.');
-    });
-  }
-
-  static tokenize(inputString) {
+  static _tokenize(inputString) {
     return inputString.split(' ');
   }
 
   // Handles and consumes current token
-  consumeToken() {
-    switch (this.currentToken()) {
+  _consumeToken() {
+    switch (this._currentToken()) {
       case 'InitGame:': {
-        this.consumeInitGameToken();
+        this._consumeInitGameToken();
         break;
       }
       case 'ClientUserinfoChanged:': {
-        this.consumeUserInfoToken();
+        this._consumeUserInfoToken();
         break;
       }
       case 'Kill:': {
-        this.consumeKillToken();
+        this._consumeKillToken();
         break;
       }
-      default: this.tokenIndex += 1;
+      default: this._tokenIndex += 1;
     }
   }
 
   // Consumes tokens until finds endToken
-  consumeTokensUntil(endToken) {
+  _consumeTokensUntil(endToken) {
     const consumedTokens = [];
-    while (this.currentToken() !== endToken) {
-      if (this.currentToken() !== endToken) {
-        consumedTokens.push(this.currentToken());
-        this.tokenIndex += 1;
+    while (this._currentToken() !== endToken) {
+      if (this._currentToken() !== endToken) {
+        consumedTokens.push(this._currentToken());
+        this._tokenIndex += 1;
       }
     }
     return consumedTokens;
   }
 
   // Consumes tokens until token contains end
-  consumeTokensUntilIncludes(end) {
+  _consumeTokensUntilIncludes(end) {
     const consumedTokens = [];
-    while (!this.currentToken().includes(end)) {
-      consumedTokens.push(this.currentToken());
-      this.tokenIndex += 1;
+    while (!this._currentToken().includes(end)) {
+      consumedTokens.push(this._currentToken());
+      this._tokenIndex += 1;
     }
-    consumedTokens.push(this.currentToken());
+    consumedTokens.push(this._currentToken());
 
     return consumedTokens;
   }
 
   // Consumes "Killed:"
-  consumeKillToken() {
-    this.tokenIndex += 1;
-    const killerPlayerID = this.currentToken();
+  _consumeKillToken() {
+    this._tokenIndex += 1;
+    const killerPlayerID = this._currentToken();
 
-    this.tokenIndex += 1;
-    const killedPlayerID = this.currentToken();
+    this._tokenIndex += 1;
+    const killedPlayerID = this._currentToken();
 
     // Adds to total_kills
-    this.currentGameInfo().total_kills += 1;
+    this._currentGameInfo().total_kills += 1;
 
     if (killerPlayerID === WORLD_ID) {
       // If not killed by a player, subtract 1 kill of killed
-      this.currentGameInfo().kills[killedPlayerID] -= 1;
+      this._currentGameInfo().kills[killedPlayerID] -= 1;
     } else {
       // If killed by a player, adds 1 kill to killer
-      this.currentGameInfo().kills[killerPlayerID] += 1;
+      this._currentGameInfo().kills[killerPlayerID] += 1;
     }
   }
 
   // Consumes "InitGame:"
-  consumeInitGameToken() {
-    this.tokenIndex += 1;
+  _consumeInitGameToken() {
+    this._tokenIndex += 1;
 
     // Adds empty game information entry
-    this.games.push({
+    this._games.push({
       total_kills: 0,
       players: {},
       kills: {},
@@ -138,18 +142,18 @@ class GameLogParser {
   }
 
   // Consumes "ClientUserinfoChanged:"
-  consumeUserInfoToken() {
-    this.tokenIndex += 1;
-    const playerID = this.currentToken();
+  _consumeUserInfoToken() {
+    this._tokenIndex += 1;
+    const playerID = this._currentToken();
 
-    this.tokenIndex += 1;
-    const playerInfo = this.consumeTokensUntilIncludes('\\t').join(' ');
+    this._tokenIndex += 1;
+    const playerInfo = this._consumeTokensUntilIncludes('\\t').join(' ');
     // Uses regex to get username
     const playerUsername = playerInfo.match(/n\\([^\\]*)\\t/)[1];
 
-    this.currentGameInfo().players[playerID] = playerUsername;
+    this._currentGameInfo().players[playerID] = playerUsername;
     // Defaults player kill to 0 if don't already exists
-    this.currentGameInfo().kills[playerID] = this.currentGameInfo().kills[playerID] || 0;
+    this._currentGameInfo().kills[playerID] = this._currentGameInfo().kills[playerID] || 0;
   }
 }
 
