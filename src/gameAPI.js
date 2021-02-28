@@ -46,7 +46,12 @@ class GameAPI {
 
     // Get game information by id
     app.get('/gameByID/:gameID', (req, res) => {
-      res.send(this.games[req.params.gameID]);
+      const { gameID } = req.params;
+      if (gameID > 0 && gameID < this.games.length) {
+        res.status(200).json(this.games[gameID]);
+      } else {
+        res.status(404).send('ID provided does not represent a game.');
+      }
     });
 
     // Starts server
