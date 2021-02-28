@@ -1,3 +1,5 @@
+const WORLD_ID = '1022';
+
 /*   The parser works breaking the input into tokens (strings with no spaces), then starts
  *  iterating through the tokens and consuming then, reading it's value to handle what should
  *  be added to the gameInfo object;
@@ -9,13 +11,17 @@ class GameLogParser {
     this.logTokenized = [];
     this.tokenIndex = 0;
 
-    this.kills = [];
+    this.gameInfo = [];
 
     this.parse();
   }
 
-  get currentToken() {
+  currentToken() {
     return this.logTokenized[this.tokenIndex];
+  }
+
+  currentGameInfo() {
+    return Object.values(this.gameInfo[this.gameInfo.length - 1])[0];
   }
 
   parse() {
@@ -55,16 +61,22 @@ class GameLogParser {
 
   // Consumes "Killed:"
   consumeKillToken() {
-    this.tokenIndex += 4;
-    const killerPlayer = this.consumeTokensUntil('killed').join(' ');
+    this.tokenIndex += 1;
+    const killerPlayerID = this.currentToken();
 
     this.tokenIndex += 1;
-    const killedPlayer = this.consumeTokensUntil('by').join(' ');
+    const killedPlayerID = this.currentToken();
 
-    this.kills.push({
-      killer: killerPlayer,
-      killed: killedPlayer,
-    });
+    // Adds to total_kills
+    this.currentGameInfo().total_kills += 1;
+
+    if (killerPlayerID === WORLD_ID) {
+      // If not killed by a player, subtract 1 kill of killed
+      this.currentGameInfo().kills[killedPlayerID] -= 1;
+    } else {
+      // If killed by a player, adds 1 kill to killer
+      this.currentGameInfo().kills[killerPlayerID] += 1;
+    }
   }
 }
 
