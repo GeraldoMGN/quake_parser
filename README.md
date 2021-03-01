@@ -55,7 +55,7 @@ Devolve a informação de um jogo a partir do seu ID.
   - **Conteúdo**:
 
 ```
-  {
+{
   "game_1": {
     "total_kills": 11,
     "players": [
@@ -66,7 +66,11 @@ Devolve a informação de um jogo a partir do seu ID.
       "Isgalamido": -5,
       "Mocinha": 0
     }
-  }
+  },
+  "ranking": [
+    [ "Mocinha", 0 ],
+    [ "Isgalamido", -5 ]
+  ]
 }
 ```
 
@@ -101,6 +105,14 @@ Devolve a informação de um jogo a partir do seu ID.
       "Mal": 0,
       "Assasinu Credi": 1
     }
-  }
+  },
+  "ranking": [
+    [ "Oootsimo", 8 ],
+    [ "Zeh", 7 ],
+    [ "Isgalamido", 3 ],
+    [ "Dono da Bola", 2 ],
+    [ "Assasinu Credi", 1 ],
+    [ "Mal", 0 ]
+  ]
 }
 ```
